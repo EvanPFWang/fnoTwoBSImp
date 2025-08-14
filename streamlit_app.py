@@ -226,12 +226,12 @@ with st.sidebar:
     
     st.divider()
     
-    # Database Configuration
+    #Database Configuration
     st.subheader("🗄️ Database Settings")
     
     db_enabled = st.checkbox("Enable Database Storage", value=True)
     
-    if db_enabled:
+    if db_enabled:# ReTUn To THIS
         default_url = os.environ.get("MYSQL_URL", "mysql+pymysql://user:pass@localhost:3306/Evan_dev_db")
         mysql_url = st.text_input(
             "MySQL Connection URL",
@@ -243,28 +243,28 @@ with st.sidebar:
     
     st.divider()
     
-    # Additional Options
+    #Additional Options
     st.subheader("⚡ Additional Options")
     show_greeks = st.checkbox("Calculate Greeks", value=True)
     show_values = st.checkbox("Show values on heatmap", value=False)
     show_3d = st.checkbox("Show 3D surface plots", value=False)
 
-# Main content area
-# Calculate button with custom styling
+#Main content area
+#Calculate button with custom styling
 col_main1, col_main2, col_main3 = st.columns([1, 2, 1])
 with col_main2:
     calculate = st.button("   Calculate Options", use_container_width=True, type="primary")
 
 if calculate:
-    # Progress bar
+    #Progress bar
     progress_bar = st.progress(0)
     status_text = st.empty()
     
-    # Step 1: Calculate base option prices and Greeks
+    #Step 1: Calculate base option prices and Greeks
     status_text.text("Calculating option prices...")
     progress_bar.progress(20)
     
-    # Calculate with Greeks if requested
+    #Calculate with Greeks if requested
     if show_greeks:
         call_base, put_base, greeks = black_scholes_call_put(
             S0, K, r, sigma, T, compute_greeks=True
@@ -273,7 +273,7 @@ if calculate:
         call_base, put_base = black_scholes_call_put(S0, K, r, sigma, T)
         greeks = None
     
-    # Step 2: Display base results
+    #Step 2: Display base results
     status_text.text("Displaying results...")
     progress_bar.progress(40)
     
@@ -305,18 +305,18 @@ if calculate:
             st.metric("Vega", f"{float(greeks['vega']):.4f}")
             st.caption("*Greeks shown for current parameters")
     
-    # Step 3: Generate heatmap data
+    #Step 3: Generate heatmap data
     status_text.text("Generating heatmaps...")
     progress_bar.progress(60)
     
     SS, VV, S_vec, V_vec = build_grids(min_S, max_S, min_vol, max_vol, nS, nV)
     call_surf, put_surf = black_scholes_call_put(SS, K, r, VV, T)
     
-    # Step 4: Create visualizations
+    #Step 4: Create visualizations
     status_text.text("Creating visualizations...")
     progress_bar.progress(80)
     
-    # Tabs for different views
+    #Tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs([" Price Heatmaps", " P&L Analysis", " Greeks Heatmaps", " 3D Surfaces"])
     
     with tab1:
@@ -325,7 +325,7 @@ if calculate:
         col1, col2 = st.columns(2)
         
         with col1:
-            # Call price heatmap
+            #Call price heatmap
             fig_call = px.imshow(
                 call_surf,
                 x=S_vec,
@@ -354,7 +354,7 @@ if calculate:
             st.plotly_chart(fig_call, use_container_width=True)
         
         with col2:
-            # Put price heatmap
+            #Put price heatmap
             fig_put = px.imshow(
                 put_surf,
                 x=S_vec,
@@ -385,14 +385,14 @@ if calculate:
     with tab2:
         st.subheader("Profit & Loss Analysis")
         
-        # Calculate P&L surfaces
+        #Calculate P&L surfaces
         pnl_call = pnl_surface(call_surf, purchase_call)
         pnl_put = pnl_surface(put_surf, purchase_put)
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Call P&L heatmap
+            #Call P&L heatmap
             fig_pnl_call = px.imshow(
                 pnl_call,
                 x=S_vec,
@@ -421,7 +421,7 @@ if calculate:
             )
             st.plotly_chart(fig_pnl_call, use_container_width=True)
             
-            # P&L statistics
+            #P&L statistics
             st.info(f"""
             **Call P&L Statistics:**
                 Max Profit: ${np.max(pnl_call):.2f}
@@ -430,7 +430,7 @@ if calculate:
             """)
         
         with col2:
-            # Put P&L heatmap
+            #Put P&L heatmap
             fig_pnl_put = px.imshow(
                 pnl_put,
                 x=S_vec,
@@ -459,7 +459,7 @@ if calculate:
             )
             st.plotly_chart(fig_pnl_put, use_container_width=True)
             
-            # P&L statistics
+            #P&L statistics
             st.info(f"""
             **Put P&L Statistics:**
                 Max Profit: ${np.max(pnl_put):.2f}
@@ -471,10 +471,10 @@ if calculate:
         if show_greeks:
             st.subheader("Greeks Heatmaps")
             
-            # Calculate Greeks for the grid
+            #Calculate Greeks for the grid
             _, _, greeks_grid = black_scholes_call_put(SS, K, r, VV, T, compute_greeks=True)
             
-            # Create subplots for Greeks
+            #Create subplots for Greeks
             fig = make_subplots(
                 rows=2, cols=3,
                 subplot_titles=('Call Delta', 'Put Delta', 'Gamma',
@@ -483,7 +483,7 @@ if calculate:
                 horizontal_spacing=0.1
             )
             
-            # Add heatmaps for each Greek
+            #Add heatmaps for each Greek
             greeks_data = [
                 ('call_delta', 1, 1, 'RdYlGn'),
                 ('put_delta', 1, 2, 'RdYlGn_r'),
@@ -527,7 +527,7 @@ if calculate:
             col1, col2 = st.columns(2)
             
             with col1:
-                # 3D Call surface
+                #3D Call surface
                 fig_3d_call = go.Figure(data=[go.Surface(
                     x=S_vec,
                     y=V_vec,
@@ -549,7 +549,7 @@ if calculate:
                 st.plotly_chart(fig_3d_call, use_container_width=True)
             
             with col2:
-                # 3D Put surface
+                #3D Put surface
                 fig_3d_put = go.Figure(data=[go.Surface(
                     x=S_vec,
                     y=V_vec,
@@ -572,7 +572,7 @@ if calculate:
         else:
             st.info("Enable '3D surface plots' in the sidebar to view 3D visualizations.")
     
-    # Step 5: Save to database
+    #Step 5: Save to database
     if db_enabled:
         status_text.text("Saving to database...")
         progress_bar.progress(90)
@@ -582,7 +582,7 @@ if calculate:
             if auto_create:
                 create_all(engine)
             
-            # Prepare inputs dictionary
+            #Prepare inputs dictionary
             inputs = {
                 'StockPrice': S0,
                 'StrikePrice': K,
@@ -599,7 +599,7 @@ if calculate:
                 'GridNVol': nV
             }
             
-            # Insert calculation
+            #Insert calculation
             calc_id, n_rows = insert_calculation(
                 engine, inputs, S_vec, V_vec, call_surf, put_surf
             )
@@ -615,13 +615,13 @@ if calculate:
             st.error(f"Database error: {str(e)}")
             st.info("Check your database connection settings and try again.")
     
-    # Complete
+    #Complete
     status_text.text("Complete!")
     progress_bar.progress(100)
     progress_bar.empty()
     status_text.empty()
 
-# Footer
+#Footer
 st.divider()
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 20px;'>
@@ -630,7 +630,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Information expander
+#Information expander
 with st.expander("Info About Black-Scholes Model"):
     st.markdown("""
     The **Black-Scholes model** is a mathematical framework for pricing Euro-style options.
@@ -655,7 +655,7 @@ with st.expander("Info About Black-Scholes Model"):
         All numerical values use DECIMAL(18,9) for precision
     """)
 
-# Sidebar footer
+#Sidebar footer
 with st.sidebar:
     st.divider()
     st.caption("Version 2.0 | Enhanced Edition")
