@@ -52,8 +52,8 @@ from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from bs_pricing import  black_scholes_call_put, implied_volatility
-from error_minimization import safe_subtract
+from bs_pricing.py import  black_scholes_call_put, implied_volatility
+from error_minimization.py import safe_subtract
 
 
 import time

@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+import math
+from typing import Callable, Iterable, List, Sequence, Tuple, Union
+
+import numpy as np
+
 """
 Unified Black‑Scholes solvers and learning models with numerical error control.
 
@@ -115,13 +122,6 @@ approximation:
         print("Mean squared error:", error.item())
 
 """
-
-from __future__ import annotations
-
-import math
-from typing import Callable, Iterable, List, Sequence, Tuple, Union
-
-import numpy as np
 
 # Attempt to import PyTorch.  If unavailable FNO classes and
 # training utilities will raise informative errors when used.  This

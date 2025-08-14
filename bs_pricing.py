@@ -1,12 +1,7 @@
 
-"""
-Vectorized Black–Scholes pricing utilities.
-"""
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple, Union
-
-#sciPy is used for standard normal CDF for numerical stability
+from typing import Tuple, Union, Optional, Dict
 try:
     from scipy.stats import norm
     _have_scipy = True
@@ -14,6 +9,9 @@ except Exception:
     _have_scipy = False
 
 
+"""
+Vectorized Black–Scholes pricing utilities.
+"""
 import os
 import numpy as np
 import pandas as pd
@@ -40,10 +38,6 @@ ArrayLike = Union[float, np.ndarray]
 """
 Enhanced Black-Scholes pricing utilities with Greeks calculation.
 """
-from __future__ import annotations
-import numpy as np
-from dataclasses import dataclass
-from typing import Tuple, Union, Optional, Dict
 
 #SciPy is used for standard normal CDF and PDF for numerical stability
 try:
@@ -55,7 +49,7 @@ except Exception:
 
 ArrayLike = Union[float, np.ndarray]
 
-
+#sciPy is used for standard normal CDF for numerical stability
 def _norm_cdf(x: np.ndarray) -> np.ndarray:
     """Cumulative distribution function for standard normal."""
     if _have_scipy:

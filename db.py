@@ -1,7 +1,3 @@
-"""
-Enhanced Database Module for Black-Scholes Application
-Optimized for ML tasks with efficient data retrieval and storage
-"""
 from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
@@ -9,6 +5,12 @@ from typing import Dict, Any, Optional, Tuple, List
 import numpy as np
 import pandas as pd
 from datetime import datetime
+
+"""
+Enhanced Database Module for Black-Scholes Application
+Optimized for ML tasks with efficient data retrieval and storage
+"""
+
 
 from sqlalchemy import (
     create_engine, Column, Integer, Numeric, Boolean, String,

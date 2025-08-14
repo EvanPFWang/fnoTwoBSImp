@@ -4,10 +4,9 @@ import numpy as np
 import streamlit as st
 import plotly.express as px
 from decimal import Decimal
-from bs_pricing import black_scholes_call_put, build_grids, pnl_surface
+from bs_pricing.py import black_scholes_call_put, build_grids, pnl_surface
 from db import create_engine_from_url, create_all, insert_calculation
-from datetime import datetime
-
+import datetime as dt
 
 
 
@@ -733,7 +732,7 @@ if calculate:
                **Data saved successfully!**
                 Calculation ID: {calc_id}
                 Total rows inserted: {n_rows}
-                Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                Timestamp: {dt.now().strftime('%Y-%m-%d %H:%M:%S')}
             """)
             
         except Exception as e:
@@ -784,7 +783,7 @@ with st.expander("Info About Black-Scholes Model"):
 with st.sidebar:
     st.divider()
     st.caption("Version 2.0 | Enhanced Edition")
-    st.caption(f"Session started: {datetime.now().strftime('%H:%M:%S')}")
+    st.caption(f"Session started: {dt.now().strftime('%H:%M:%S')}")
 
 
 
