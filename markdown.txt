@@ -1,0 +1,239 @@
+# Black-Scholes Option Pricing Application
+
+A comprehensive option pricing application matching https://blackschole.streamlit.app/ with interactive heatmaps, P&L analysis, Greeks calculations, and MySQL database integration optimized for ML tasks.
+
+## Features
+
+- **Core Black-Scholes Pricing**: European option pricing with 5 base inputs
+- **Interactive Heatmaps**: Visualize option prices across spot price and volatility ranges
+- **P&L Analysis**: Real-time profit/loss visualization with purchase price inputs
+- **Greeks Calculations**: Delta, Gamma, Theta, Vega, and Rho for risk management
+- **MySQL Database**: Optimized schema for ML training data retrieval
+- **3D Surface Plots**: Optional 3D visualizations of option surfaces
+- **Performance Optimized**: Bulk inserts, indexed queries, connection pooling
+
+## Quick Start
+
+### 1. Clone and Setup Environment
+
+```bash
+# Clone repository
+git clone [your-repo-url]
+cd black_scholes_app
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Database Setup
+
+#### Option A: Using SQL Script
+```bash
+# Login to MySQL
+mysql -u root -p
+
+# Run schema script
+source schema.sql
+```
+
+#### Option B: Auto-create via Application
+The application can auto-create tables when "Auto-create tables" is checked in the sidebar.
+
+### 3. Configure Environment
+
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env with your database credentials
+# Update MYSQL_URL with your connection string
+```
+
+### 4. Run the Application
+
+```bash
+# Set environment variable (optional)
+export MYSQL_URL="mysql+pymysql://user:pass@localhost:3306/Evan_dev_db"
+
+# Run Streamlit app
+streamlit run streamlit_app.py
+
+# Application will open at http://localhost:8501
+```
+
+## Usage Guide
+
+### Basic Workflow
+
+1. **Set Base Parameters** (Sidebar)
+   - Stock Price (S₀): Current underlying price
+   - Strike Price (K): Option strike
+   - Time to Expiry (T): Years until expiration
+   - Volatility (σ): Annual volatility
+   - Risk-Free Rate (r): Annual interest rate
+
+2. **Configure Heatmap Range**
+   - Min/Max Spot Price: Range for X-axis
+   - Min/Max Volatility: Range for Y-axis
+   - Grid Points: Resolution of heatmap
+
+3. **Enter Purchase Prices** (for P&L)
+   - Call Purchase Price
+   - Put Purchase Price
+
+4. **Click Calculate** 
+   - View option prices and Greeks
+   - Explore heatmaps in different tabs
+   - Analyze P&L surfaces
+
+### Database Schema
+
+The application uses three main tables optimized for ML:
+
+```sql
+BlackScholesInputs     # Stores calculation parameters
+BlackScholesOutputs    # Stores grid results (linked to inputs)
+MLDataCache           # Optional: Preprocessed ML features
+```
+
+### ML Data Retrieval
+
+```python
+from db import create_engine_from_url, get_ml_training_data
+
+# Connect to database
+engine = create_engine_from_url("mysql+pymysql://...")
+
+# Get training data
+df = get_ml_training_data(engine, limit=1000)
+# Returns DataFrame with features and labels
+```
+
+## CLI Tool
+
+For command-line pricing without GUI:
+
+```bash
+python repl_app.py
+```
+
+## File Structure
+
+```
+black_scholes_app/
+├── streamlit_app.py      # Main Streamlit application
+├── bs_pricing.py         # Black-Scholes calculations & Greeks
+├── db.py                 # Database models and operations
+├── repl_app.py          # CLI pricing tool
+├── schema.sql           # MySQL database schema
+├── requirements.txt     # Python dependencies
+├── .env.example        # Environment configuration template
+└── README.md           # This file
+```
+
+## Advanced Features
+
+### Greeks Heatmaps
+Enable "Calculate Greeks" in sidebar to visualize:
+- Delta surfaces (price sensitivity)
+- Gamma surfaces (delta sensitivity)
+- Theta surfaces (time decay)
+- Vega surfaces (volatility sensitivity)
+- Rho surfaces (interest rate sensitivity)
+
+### 3D Visualizations
+Enable "Show 3D surface plots" for interactive 3D option price surfaces.
+
+### Database Operations
+
+```python
+# Insert calculation
+calc_id, n_rows = insert_calculation(
+    engine, inputs, S_grid, V_grid, 
+    call_surface, put_surface,
+    session_id="session_123",  # Optional: for tracking
+    user_id="user_456"         # Optional: for ML personalization
+)
+
+# Retrieve calculation
+data = retrieve_calculation(engine, calc_id)
+
+# Clean old data
+deleted = cleanup_old_data(engine, days_to_keep=30)
+```
+
+## Performance Optimization
+
+- **Bulk Inserts**: Grid outputs inserted in batches
+- **Indexed Queries**: Composite indexes for ML data retrieval
+- **Connection Pooling**: Configurable pool size for concurrent requests
+- **Cached Calculations**: Optional ML cache table for preprocessed features
+
+## Troubleshooting
+
+### Database Connection Issues
+```bash
+# Test MySQL connection
+mysql -h localhost -u user -p Evan_dev_db
+
+# Check if tables exist
+SHOW TABLES IN Evan_dev_db;
+```
+
+### Performance Issues
+- Reduce grid resolution (fewer points)
+- Enable database indexes
+- Use connection pooling
+- Consider data partitioning for large datasets
+
+### Common Errors
+
+1. **"Access denied for user"**: Check MySQL credentials in .env
+2. **"Table doesn't exist"**: Enable auto-create or run schema.sql
+3. **"Module not found"**: Install requirements: `pip install -r requirements.txt`
+
+## Configuration Options
+
+### Environment Variables
+- `MYSQL_URL`: Database connection string
+- `STREAMLIT_SERVER_PORT`: Change default port (8501)
+- `SESSION_SECRET_KEY`: For session tracking
+- `ML_MODEL_PATH`: Directory for saved models
+
+### Database Tuning
+```sql
+-- Adjust for your workload
+SET GLOBAL max_connections = 200;
+SET GLOBAL innodb_buffer_pool_size = 1G;
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
+
+## License
+
+This project is for educational purposes. Black-Scholes model implementation follows standard financial mathematics.
+
+## Support
+
+For issues or questions:
+- Check troubleshooting section
+- Review database logs
+- Verify environment configuration
+
+## Next Steps
+
+- [ ] Add implied volatility calculator
+- [ ] Implement real-time market data
+- [ ] Add more exotic option types
+- [ ] Create ML prediction models
+- [ ] Add portfolio analysis features

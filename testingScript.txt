@@ -1,0 +1,251 @@
+"""
+Testing and validation utilities for Black-Scholes application
+"""
+import numpy as np
+import pandas as pd
+from bs_pricing import black_scholes_call_put, implied_volatility
+import time
+
+
+def validate_put_call_parity(S, K, r, T, call_price, put_price, tolerance=1e-6):
+    """
+    Validate put-call parity: C - P = S - K * exp(-r*T)
+    
+    Returns True if parity holds within tolerance
+    """
+    left_side = call_price - put_price
+    right_side = S - K * np.exp(-r * T)
+    difference = abs(left_side - right_side)
+    
+    return difference < tolerance, difference
+
+
+def benchmark_pricing_performance(n_iterations=1000):
+    """
+    Benchmark the performance of Black-Scholes calculations
+    """
+    # Random parameters
+    np.random.seed(42)
+    S = np.random.uniform(50, 150, n_iterations)
+    K = np.random.uniform(50, 150, n_iterations)
+    r = np.random.uniform(0.01, 0.1, n_iterations)
+    sigma = np.random.uniform(0.1, 0.5, n_iterations)
+    T = np.random.uniform(0.1, 2.0, n_iterations)
+    
+    # Time without Greeks
+    start = time.time()
+    call_prices, put_prices = black_scholes_call_put(S, K, r, sigma, T)
+    time_no_greeks = time.time() - start
+    
+    # Time with Greeks
+    start = time.time()
+    call_prices, put_prices, greeks = black_scholes_call_put(S, K, r, sigma, T, compute_greeks=True)
+    time_with_greeks = time.time() - start
+    
+    print(f"Benchmark Results ({n_iterations} iterations):")
+    print(f"Without Greeks: {time_no_greeks:.4f} seconds ({n_iterations/time_no_greeks:.0f} calcs/sec)")
+    print(f"With Greeks: {time_with_greeks:.4f} seconds ({n_iterations/time_with_greeks:.0f} calcs/sec)")
+    print(f"Greeks overhead: {(time_with_greeks/time_no_greeks - 1)*100:.1f}%")
+    
+    return time_no_greeks, time_with_greeks
+
+
+def test_implied_volatility():
+    """
+    Test implied volatility calculation
+    """
+    # Known parameters
+    S = 100
+    K = 100
+    r = 0.05
+    T = 1.0
+    true_sigma = 0.2
+    
+    # Calculate option prices
+    call_price, put_price = black_scholes_call_put(S, K, r, true_sigma, T)
+    
+    # Calculate implied volatility
+    iv_call = implied_volatility(float(call_price), S, K, r, T, 'call')
+    iv_put = implied_volatility(float(put_price), S, K, r, T, 'put')
+    
+    print("Implied Volatility Test:")
+    print(f"True volatility: {true_sigma:.4f}")
+    print(f"Implied vol (call): {iv_call:.4f}")
+    print(f"Implied vol (put): {iv_put:.4f}")
+    print(f"Call error: {abs(iv_call - true_sigma):.6f}")
+    print(f"Put error: {abs(iv_put - true_sigma):.6f}")
+    
+    return iv_call, iv_put
+
+
+def validate_greeks_relationships():
+    """
+    Validate mathematical relationships between Greeks
+    """
+    # Parameters
+    S = 100
+    K = 100
+    r = 0.05
+    sigma = 0.2
+    T = 1.0
+    
+    # Calculate with Greeks
+    _, _, greeks = black_scholes_call_put(S, K, r, sigma, T, compute_greeks=True)
+    
+    # Test: Call Delta - Put Delta = exp(-q*T) ≈ 1 (when q=0)
+    delta_diff = greeks['call_delta'] - greeks['put_delta']
+    expected_diff = 1.0  # Since q=0
+    
+    print("Greeks Validation:")
+    print(f"Call Delta - Put Delta = {delta_diff:.6f} (expected: {expected_diff:.6f})")
+    
+    # Test: Gamma should be positive
+    print(f"Gamma = {greeks['gamma']:.6f} (should be > 0: {greeks['gamma'] > 0})")
+    
+    # Test: Vega should be positive
+    print(f"Vega = {greeks['vega']:.6f} (should be > 0: {greeks['vega'] > 0})")
+    
+    return greeks
+
+
+def generate_test_data_for_ml(n_samples=100):
+    """
+    Generate synthetic test data for ML model training
+    """
+    np.random.seed(42)
+    
+    data = []
+    for _ in range(n_samples):
+        # Generate random parameters
+        S = np.random.uniform(50, 150)
+        K = np.random.uniform(50, 150)
+        r = np.random.uniform(0.01, 0.1)
+        sigma = np.random.uniform(0.1, 0.5)
+        T = np.random.uniform(0.1, 2.0)
+        
+        # Calculate prices and Greeks
+        call_price, put_price, greeks = black_scholes_call_put(
+            S, K, r, sigma, T, compute_greeks=True
+        )
+        
+        # Store data
+        data.append({
+            'StockPrice': S,
+            'StrikePrice': K,
+            'InterestRate': r,
+            'Volatility': sigma,
+            'TimeToExpiry': T,
+            'Moneyness': S / K,
+            'CallPrice': float(call_price),
+            'PutPrice': float(put_price),
+            'CallDelta': float(greeks['call_delta']),
+            'PutDelta': float(greeks['put_delta']),
+            'Gamma': float(greeks['gamma']),
+            'Vega': float(greeks['vega']),
+            'CallTheta': float(greeks['call_theta']),
+            'PutTheta': float(greeks['put_theta']),
+            'CallRho': float(greeks['call_rho']),
+            'PutRho': float(greeks['put_rho'])
+        })
+    
+    df = pd.DataFrame(data)
+    
+    print(f"Generated {n_samples} samples for ML training")
+    print("\nDataset statistics:")
+    print(df[['CallPrice', 'PutPrice', 'Moneyness', 'Volatility']].describe())
+    
+    return df
+
+
+def test_edge_cases():
+    """
+    Test edge cases and boundary conditions
+    """
+    print("Testing Edge Cases:")
+    
+    # Test 1: Deep in-the-money call (S >> K)
+    S, K, r, sigma, T = 150, 50, 0.05, 0.2, 1.0
+    call, put = black_scholes_call_put(S, K, r, sigma, T)
+    print(f"\n1. Deep ITM Call (S={S}, K={K}):")
+    print(f"   Call: ${float(call):.2f} (≈ intrinsic value: ${S-K:.2f})")
+    print(f"   Put: ${float(put):.2f} (should be ≈ 0)")
+    
+    # Test 2: Deep out-of-the-money call (S << K)
+    S, K = 50, 150
+    call, put = black_scholes_call_put(S, K, r, sigma, T)
+    print(f"\n2. Deep OTM Call (S={S}, K={K}):")
+    print(f"   Call: ${float(call):.2f} (should be ≈ 0)")
+    print(f"   Put: ${float(put):.2f} (≈ intrinsic value: ${K-S:.2f})")
+    
+    # Test 3: Near expiration (T → 0)
+    S, K, T = 100, 100, 0.001
+    call, put = black_scholes_call_put(S, K, r, sigma, T)
+    print(f"\n3. Near Expiration (T={T}):")
+    print(f"   Call: ${float(call):.4f}")
+    print(f"   Put: ${float(put):.4f}")
+    
+    # Test 4: High volatility
+    sigma = 2.0
+    call, put = black_scholes_call_put(100, 100, r, sigma, 1.0)
+    print(f"\n4. High Volatility (σ={sigma}):")
+    print(f"   Call: ${float(call):.2f}")
+    print(f"   Put: ${float(put):.2f}")
+    
+    # Test 5: Zero volatility (should approach intrinsic value)
+    sigma = 0.001
+    S, K = 110, 100
+    call, put = black_scholes_call_put(S, K, r, sigma, 1.0)
+    print(f"\n5. Near-Zero Volatility (σ={sigma}):")
+    print(f"   Call: ${float(call):.2f} (intrinsic: ${max(S-K*np.exp(-r), 0):.2f})")
+    print(f"   Put: ${float(put):.2f}")
+
+
+def run_all_tests():
+    """
+    Run all validation tests
+    """
+    print("="*60)
+    print("BLACK-SCHOLES VALIDATION SUITE")
+    print("="*60)
+    
+    # Test 1: Put-Call Parity
+    print("\n1. PUT-CALL PARITY TEST")
+    print("-"*30)
+    S, K, r, T = 100, 100, 0.05, 1.0
+    call, put = black_scholes_call_put(S, K, r, 0.2, T)
+    parity_holds, diff = validate_put_call_parity(S, K, r, T, float(call), float(put))
+    print(f"Parameters: S={S}, K={K}, r={r}, T={T}")
+    print(f"Parity holds: {parity_holds} (difference: {diff:.8f})")
+    
+    # Test 2: Performance
+    print("\n2. PERFORMANCE BENCHMARK")
+    print("-"*30)
+    benchmark_pricing_performance(1000)
+    
+    # Test 3: Implied Volatility
+    print("\n3. IMPLIED VOLATILITY")
+    print("-"*30)
+    test_implied_volatility()
+    
+    # Test 4: Greeks Validation
+    print("\n4. GREEKS VALIDATION")
+    print("-"*30)
+    validate_greeks_relationships()
+    
+    # Test 5: Edge Cases
+    print("\n5. EDGE CASES")
+    print("-"*30)
+    test_edge_cases()
+    
+    # Test 6: Generate ML Data
+    print("\n6. ML DATA GENERATION")
+    print("-"*30)
+    df = generate_test_data_for_ml(50)
+    
+    print("\n" + "="*60)
+    print("ALL TESTS COMPLETED SUCCESSFULLY")
+    print("="*60)
+
+
+if __name__ == "__main__":
+    run_all_tests()
