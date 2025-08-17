@@ -4,7 +4,7 @@ import numpy as np
 import streamlit as st
 import plotly.express as px
 from decimal import Decimal
-from bs_pricing.py import black_scholes_call_put, build_grids, pnl_surface
+from bs_pricing import black_scholes_call_put, build_grids, pnl_surface
 from db import create_engine_from_url, create_all, insert_calculation
 import datetime as dt
 
